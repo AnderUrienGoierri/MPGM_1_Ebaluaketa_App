@@ -66,6 +66,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.goierrieskola.mpgl_1_ebaluaketa_app.data.PracticalRepository
@@ -422,6 +423,112 @@ fun ChallengeItemCard(
                 }
             } else {
                 // 3. MODALITATEA: WRITE_CODE (Kode zatia idatzi eta egiaztatu)
+
+                // Sinbolo eta Hitz-gako azkarren barra (Teklatuan { } idazteko arazoak konpontzeko)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Tekla azkarrak (klikatu txertatzeko):",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (userWrittenCode.isNotEmpty()) {
+                        Text(
+                            text = "Garbitu ✕",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = WrongRed,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(4.dp))
+                                .clickable {
+                                    userWrittenCode = ""
+                                    writeValidationResult = null
+                                }
+                                .padding(horizontal = 4.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val quickSymbols = listOf(
+                        "{" to "{",
+                        "}" to "}",
+                        "{ }" to "{  }",
+                        "(" to "(",
+                        ")" to ")",
+                        "( )" to "()",
+                        "=" to " = ",
+                        "\"" to "\"",
+                        "?." to "?.",
+                        "?:" to " ?: ",
+                        "true" to "true",
+                        "false" to "false",
+                        "rememberSaveable" to "rememberSaveable ",
+                        "mutableStateOf" to "mutableStateOf()",
+                        "weight(1f)" to "weight(1f)"
+                    )
+
+                    quickSymbols.forEach { (label, toInsert) ->
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = PrimaryBlue.copy(alpha = 0.12f),
+                            border = BorderStroke(1.dp, PrimaryBlue.copy(alpha = 0.35f)),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable {
+                                    userWrittenCode += toInsert
+                                    writeValidationResult = null
+                                }
+                        ) {
+                            Text(
+                                text = label,
+                                fontSize = 12.sp,
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.Bold,
+                                color = PrimaryBlue,
+                                modifier = Modifier.padding(horizontal = 9.dp, vertical = 6.dp)
+                            )
+                        }
+                    }
+
+                    // Atzera borratu botoia (Backspace)
+                    Surface(
+                        shape = RoundedCornerShape(8.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable {
+                                if (userWrittenCode.isNotEmpty()) {
+                                    userWrittenCode = userWrittenCode.dropLast(1)
+                                    writeValidationResult = null
+                                }
+                            }
+                    ) {
+                        Text(
+                            text = "⌫ Ezabatu",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
                 OutlinedTextField(
                     value = userWrittenCode,
                     onValueChange = {
@@ -430,6 +537,10 @@ fun ChallengeItemCard(
                     },
                     label = { Text("Idatzi hemen falta den kodea...", fontSize = 13.sp) },
                     textStyle = TextStyle(fontFamily = FontFamily.Monospace, fontSize = 13.sp),
+                    keyboardOptions = KeyboardOptions(
+                        autoCorrectEnabled = false,
+                        keyboardType = KeyboardType.Ascii
+                    ),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = PrimaryBlue,
                         unfocusedBorderColor = MaterialTheme.colorScheme.outline
