@@ -2,6 +2,7 @@ package com.goierrieskola.mpgl_1_ebaluaketa_app.ui.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
@@ -56,6 +57,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -472,168 +474,177 @@ fun QuizScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Gaiko etiketa eta Irten / Nahastu botoiak
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(PrimaryBlue.copy(alpha = 0.1f))
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
+            key(currentQuestionIndex) {
+                // Gaiko etiketa eta Irten / Nahastu botoiak
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = currentQuestion.topicTitle,
-                        color = PrimaryBlue,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    )
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Test-etik irteteko botoi esplizitua
-                    IconButton(
-                        onClick = { showInternalExitDialog = true },
-                        modifier = Modifier.size(28.dp)
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(PrimaryBlue.copy(alpha = 0.1f))
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = "Irten Test-etik",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        Text(
+                            text = currentQuestion.topicTitle,
+                            color = PrimaryBlue,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
                         )
                     }
-                }
-            }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Galderaren testua
-            Text(
-                text = currentQuestion.question,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                lineHeight = 24.sp
-            )
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            // 4 Erantzun Aukerak (A, B, C, D ausazko posizioetan, luzera orekatuak)
-            currentQuestion.options.forEachIndexed { index, optionText ->
-                OptionCard(
-                    text = optionText,
-                    index = index,
-                    isSelected = selectedOptionIndex == index,
-                    isCorrect = index == currentQuestion.correctIndex,
-                    hasAnswered = hasAnswered,
-                    onClick = {
-                        if (!hasAnswered) {
-                            selectedOptionIndex = index
-                            hasAnswered = true
-                            val isCorrect = index == currentQuestion.correctIndex
-                            if (isCorrect) {
-                                score++
-                            }
-                            // Erantzuna erregistratu gero berrikusi ahal izateko
-                            sessionAnswerRecords.add(
-                                QuizAnswerRecord(
-                                    question = currentQuestion,
-                                    selectedOptionIndex = index,
-                                    isCorrect = isCorrect
-                                )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        // Test-etik irteteko botoi esplizitua
+                        IconButton(
+                            onClick = { showInternalExitDialog = true },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Close,
+                                contentDescription = "Irten Test-etik",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-            }
+                }
 
-            // Azalpen txartela erantzun ondoren
-            AnimatedVisibility(visible = hasAnswered, enter = fadeIn(), exit = fadeOut()) {
-                Column {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Card(
-                        shape = RoundedCornerShape(14.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (selectedOptionIndex == currentQuestion.correctIndex) {
-                                CorrectGreen.copy(alpha = 0.12f)
-                            } else {
-                                WrongRed.copy(alpha = 0.1f)
-                            }
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(modifier = Modifier.padding(14.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = if (selectedOptionIndex == currentQuestion.correctIndex) {
-                                        Icons.Default.CheckCircle
-                                    } else {
-                                        Icons.AutoMirrored.Filled.HelpOutline
-                                    },
-                                    contentDescription = null,
-                                    tint = if (selectedOptionIndex == currentQuestion.correctIndex) {
-                                        CorrectGreen
-                                    } else {
-                                        WrongRed
-                                    },
-                                    modifier = Modifier.size(20.dp)
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Galderaren testua
+                Text(
+                    text = currentQuestion.question,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    lineHeight = 24.sp
+                )
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // 4 Erantzun Aukerak (A, B, C, D ausazko posizioetan, luzera orekatuak)
+                currentQuestion.options.forEachIndexed { index, optionText ->
+                    OptionCard(
+                        text = optionText,
+                        index = index,
+                        isSelected = selectedOptionIndex == index,
+                        isCorrect = index == currentQuestion.correctIndex,
+                        hasAnswered = hasAnswered,
+                        onClick = {
+                            if (!hasAnswered) {
+                                selectedOptionIndex = index
+                                hasAnswered = true
+                                val isCorrect = index == currentQuestion.correctIndex
+                                if (isCorrect) {
+                                    score++
+                                }
+                                // Erantzuna erregistratu gero berrikusi ahal izateko
+                                sessionAnswerRecords.add(
+                                    QuizAnswerRecord(
+                                        question = currentQuestion,
+                                        selectedOptionIndex = index,
+                                        isCorrect = isCorrect
+                                    )
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                        }
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
+
+                // Azalpen txartela: BAKARRIK erantzun denean eta aukera hautatu denean
+                val isSelectionValid = hasAnswered && selectedOptionIndex in currentQuestion.options.indices
+                val isCorrectAnswer = isSelectionValid && selectedOptionIndex == currentQuestion.correctIndex
+
+                AnimatedVisibility(
+                    visible = isSelectionValid,
+                    enter = fadeIn(),
+                    exit = ExitTransition.None
+                ) {
+                    Column {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Card(
+                            shape = RoundedCornerShape(14.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isCorrectAnswer) {
+                                    CorrectGreen.copy(alpha = 0.12f)
+                                } else {
+                                    WrongRed.copy(alpha = 0.1f)
+                                }
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(14.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = if (isCorrectAnswer) {
+                                            Icons.Default.CheckCircle
+                                        } else {
+                                            Icons.AutoMirrored.Filled.HelpOutline
+                                        },
+                                        contentDescription = null,
+                                        tint = if (isCorrectAnswer) {
+                                            CorrectGreen
+                                        } else {
+                                            WrongRed
+                                        },
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = if (isCorrectAnswer) {
+                                            "Zorionak! Erantzun zuzena!"
+                                        } else {
+                                            "Ez da zuzena. Erantzun zuzena: ${listOf("A", "B", "C", "D").getOrElse(currentQuestion.correctIndex) { "" }}"
+                                        },
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 14.sp,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(6.dp))
                                 Text(
-                                    text = if (selectedOptionIndex == currentQuestion.correctIndex) {
-                                        "Zorionak! Erantzun zuzena!"
-                                    } else {
-                                        "Ez da zuzena. Erantzun zuzena: ${listOf("A", "B", "C", "D").getOrElse(currentQuestion.correctIndex) { "" }}"
-                                    },
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 14.sp,
+                                    text = currentQuestion.explanation,
+                                    fontSize = 13.sp,
+                                    lineHeight = 18.sp,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
-                            Spacer(modifier = Modifier.height(6.dp))
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Button(
+                            onClick = {
+                                if (currentQuestionIndex < questions.size - 1) {
+                                    hasAnswered = false
+                                    selectedOptionIndex = -1
+                                    currentQuestionIndex++
+                                } else {
+                                    // Test-a amaitu da: estatistikak gorde
+                                    QuizStatsManager.recordQuizSession(
+                                        score = score,
+                                        total = questions.size,
+                                        records = sessionAnswerRecords
+                                    )
+                                    quizCompleted = true
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
                             Text(
-                                text = currentQuestion.explanation,
-                                fontSize = 13.sp,
-                                lineHeight = 18.sp,
-                                color = MaterialTheme.colorScheme.onSurface
+                                text = if (currentQuestionIndex < questions.size - 1) {
+                                    "Hurrengo Galdera →"
+                                } else {
+                                    "Ikusi Emaitzak eta Estatistikak 🏆"
+                                },
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                modifier = Modifier.padding(vertical = 4.dp)
                             )
                         }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Button(
-                        onClick = {
-                            if (currentQuestionIndex < questions.size - 1) {
-                                currentQuestionIndex++
-                                selectedOptionIndex = -1
-                                hasAnswered = false
-                            } else {
-                                // Test-a amaitu da: estatistikak gorde
-                                QuizStatsManager.recordQuizSession(
-                                    score = score,
-                                    total = questions.size,
-                                    records = sessionAnswerRecords
-                                )
-                                quizCompleted = true
-                            }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = if (currentQuestionIndex < questions.size - 1) {
-                                "Hurrengo Galdera →"
-                            } else {
-                                "Ikusi Emaitzak eta Estatistikak 🏆"
-                            },
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
-                            modifier = Modifier.padding(vertical = 4.dp)
-                        )
                     }
                 }
             }
